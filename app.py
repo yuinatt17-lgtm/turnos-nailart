@@ -1,34 +1,27 @@
 import streamlit as st
 import pandas as pd
 import gspread
-from google.oauth2.service_account import Credentials # <--- Esta es la librería moderna
 import json
 
-# --- CONFIGURACIÓN ---
+# --- CONFIGURACIÓN DE LA PÁGINA ---
 st.title("💅 Gestión de Turnos - Nail Art")
 st.write("Reserva tu turno y quedará guardado en Google Sheets.")
 
-# --- CONEXIÓN MODERNA ---
+# --- CONEXIÓN DIRECTA (SOLUCIÓN AL ERROR) ---
 def conectar_google_sheets():
     try:
-        # 1. Leemos la llave de los Secrets
-        info_json = json.loads(st.secrets["google_credentials"]["json_key"])
+        # 1. Recuperamos la llave de los Secrets
+        json_creds = json.loads(st.secrets["google_credentials"]["json_key"])
         
-        # 2. Definimos los permisos (Scopes)
-        scope = [
-            "https://www.googleapis.com/auth/spreadsheets",
-            "https://www.googleapis.com/auth/drive"
-        ]
+        # 2. Usamos el método directo de gspread (ESTO EVITA EL ERROR 200)
+        client = gspread.service_account_from_dict(json_creds)
         
-        # 3. Nos autenticamos con la forma NUEVA
-        creds = Credentials.from_service_account_info(info_json, scopes=scope)
-        client = gspread.authorize(creds)
-        
-        # 4. Abrimos la hoja
+        # 3. Abrimos la hoja
+        # Asegúrate de que tu hoja se llame turnos_db
         sheet = client.open("turnos_db").sheet1
         return sheet
     except Exception as e:
-        st.error(f"⚠️ Error detallado: {e}")
+        st.error(f"⚠️ Error al conectar: {e}")
         return None
 
 # --- FORMULARIO ---
@@ -41,7 +34,7 @@ with col2:
     fecha = st.date_input("Fecha")
     hora = st.time_input("Hora")
 
-# --- BOTÓN ---
+# --- BOTÓN DE GUARDAR ---
 if st.button("Reservar Turno"):
     if nombre:
         with st.spinner("Guardando en la nube..."):
@@ -52,7 +45,7 @@ if st.button("Reservar Turno"):
                 st.success(f"✅ ¡Listo! Turno agendado para **{nombre}**.")
                 st.balloons()
     else:
-        st.warning("Escribe un nombre por favor.")
+        st.warning("⚠️ Escribe un nombre por favor.")
 
 # --- VER TURNOS ---
 st.divider()
