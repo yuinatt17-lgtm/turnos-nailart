@@ -3,54 +3,56 @@ import pandas as pd
 import gspread
 import json
 
-# --- CONFIGURACIÓN DE LA PÁGINA ---
+# --- CONFIGURACIÓN ---
+st.set_page_config(page_title="Turnos Nail Art", page_icon="💅")
 st.title("💅 Gestión de Turnos - Nail Art")
-st.write("Reserva tu turno y quedará guardado en Google Sheets.")
+st.write("Reserva tu turno y quedará guardado en mi agenda personal.")
 
-# --- CONEXIÓN DIRECTA (SOLUCIÓN AL ERROR) ---
+# --- CONEXIÓN ---
 def conectar_google_sheets():
     try:
-        # 1. Recuperamos la llave de los Secrets
         json_creds = json.loads(st.secrets["google_credentials"]["json_key"])
-        
-        # 2. Usamos el método directo de gspread (ESTO EVITA EL ERROR 200)
         client = gspread.service_account_from_dict(json_creds)
-        
-        # 3. Abrimos la hoja
-        # Asegúrate de que tu hoja se llame turnos_db
         sheet = client.open("turnos_db").sheet1
         return sheet
     except Exception as e:
-        st.error(f"⚠️ Error al conectar: {e}")
+        st.error(f"⚠️ Error de conexión: {e}")
         return None
 
-# --- FORMULARIO ---
+# --- FORMULARIO PÚBLICO (ESTO LO VE TODO EL MUNDO) ---
 col1, col2 = st.columns(2)
 with col1:
-    nombre = st.text_input("Nombre del Cliente")
+    nombre = st.text_input("Nombre y Apellido")
     servicio = st.selectbox("Servicio", ["Soft Gel", "Capping", "Service", "Esmaltado", "Retiro"])
 
 with col2:
-    fecha = st.date_input("Fecha")
-    hora = st.time_input("Hora")
+    fecha = st.date_input("Fecha del turno")
+    hora = st.time_input("Hora del turno")
 
-# --- BOTÓN DE GUARDAR ---
 if st.button("Reservar Turno"):
     if nombre:
-        with st.spinner("Guardando en la nube..."):
+        with st.spinner("Guardando..."):
             hoja = conectar_google_sheets()
             if hoja:
                 fila = [nombre, servicio, str(fecha), str(hora)]
                 hoja.append_row(fila)
-                st.success(f"✅ ¡Listo! Turno agendado para **{nombre}**.")
+                st.success(f"✅ ¡Listo, {nombre}! Tu turno quedó registrado.")
                 st.balloons()
     else:
-        st.warning("⚠️ Escribe un nombre por favor.")
+        st.warning("⚠️ Por favor completa tu nombre.")
 
-# --- VER TURNOS ---
+# --- ZONA PRIVADA (SOLO PARA TI) 🔐 ---
 st.divider()
-if st.checkbox("Ver turnos agendados"):
+st.write("### 🔐 Administración")
+
+# Aquí pedimos una contraseña. Solo si escribes la correcta, se muestra la lista.
+password = st.text_input("Ingresa la clave para ver la agenda:", type="password")
+
+if password == "natali123":  # <--- ¡AQUÍ PUEDES CAMBIAR TU CONTRASEÑA!
     hoja = conectar_google_sheets()
     if hoja:
         datos = hoja.get_all_records()
+        st.write("### 📅 Turnos Agendados:")
         st.dataframe(datos)
+else:
+    st.info("Esta zona es solo para la dueña del negocio.")
