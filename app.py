@@ -1,58 +1,127 @@
 import streamlit as st
-import pandas as pd
 import gspread
+from oauth2client.service_account import ServiceAccountCredentials
+import pandas as pd
 import json
+from datetime import date
 
-# --- CONFIGURACIÓN ---
-st.set_page_config(page_title="Turnos Nail Art", page_icon="💅")
-st.title("💅 Gestión de Turnos - Nail Art")
-st.write("Reserva tu turno y quedará guardado en mi agenda personal.")
+# --- 1. CONFIGURACIÓN DE LA PÁGINA ---
+st.set_page_config(page_title="Reserva tu Turno", page_icon="💅")
 
-# --- CONEXIÓN ---
+# --- 2. TUS DATOS (¡EDITA ESTO!) ---
+# Aquí es donde tú pones tu info real en VS Code:
+MI_DIRECCION = "Los Ralos"
+MI_TELEFONO = "381 6914692" 
+MI_INSTAGRAM = "@nattdiaz98"
+
+# Título de la web
+st.title("💅 Reserva de Turnos")
+st.write("Completa tus datos para agendar tu cita.")
+
+# --- 3. CONEXIÓN CON GOOGLE SHEETS ---
 def conectar_google_sheets():
     try:
+        # Leemos la llave secreta
         json_creds = json.loads(st.secrets["google_credentials"]["json_key"])
-        client = gspread.service_account_from_dict(json_creds)
+        scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+        creds = ServiceAccountCredentials.from_json_keyfile_dict(json_creds, scope)
+        client = gspread.authorize(creds)
+        
+        # Abrimos la hoja (Asegúrate que se llame turnos_db)
         sheet = client.open("turnos_db").sheet1
         return sheet
     except Exception as e:
         st.error(f"⚠️ Error de conexión: {e}")
         return None
 
-# --- FORMULARIO PÚBLICO (ESTO LO VE TODO EL MUNDO) ---
-col1, col2 = st.columns(2)
-with col1:
-    nombre = st.text_input("Nombre y Apellido")
-    servicio = st.selectbox("Servicio", ["Soft Gel", "Capping", "Service", "Esmaltado", "Retiro"])
+# --- 4. CEREBRO ANTI-SUPERPOSICIÓN 🧠 ---
+def turno_disponible(hoja, fecha_elegida, hora_elegida):
+    # Bajamos los datos actuales
+    datos = hoja.get_all_records()
+    df = pd.DataFrame(datos)
+    
+    # Si la hoja está vacía, ¡está libre!
+    if df.empty:
+        return True
+    
+    # Convertimos a texto para comparar sin errores
+    # Buscamos: ¿Existe alguna fila con ESA fecha Y ESA hora?
+    coincidencias = df[
+        (df["Fecha"].astype(str) == str(fecha_elegida)) & 
+        (df["Hora"].astype(str) == str(hora_elegida))
+    ]
+    
+    # Si encontró coincidencias, NO está disponible
+    if not coincidencias.empty:
+        return False 
+    return True
 
-with col2:
-    fecha = st.date_input("Fecha del turno")
-    hora = st.time_input("Hora del turno")
+# --- 5. EL FORMULARIO ---
+with st.form("mi_formulario"):
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        nombre = st.text_input("Nombre y Apellido")
+        telefono = st.text_input("Teléfono / WhatsApp")
+        servicio = st.selectbox("Servicio", ["Soft Gel", "Capping", "Service", "Esmaltado", "Retiro"])
 
-if st.button("Reservar Turno"):
-    if nombre:
-        with st.spinner("Guardando..."):
-            hoja = conectar_google_sheets()
-            if hoja:
-                fila = [nombre, servicio, str(fecha), str(hora)]
+    with col2:
+        # Calendario: min_value=date.today() impide elegir ayer
+        fecha = st.date_input("Selecciona la Fecha", min_value=date.today())
+        
+        # Horarios fijos que me pediste
+        horarios = ["17:00", "19:20", "21:30"]
+        hora = st.selectbox("Selecciona la Hora", horarios)
+
+    # Botón para enviar
+    enviado = st.form_submit_button("CONFIRMAR RESERVA")
+
+# --- 6. QUÉ PASA AL TOCAR EL BOTÓN ---
+if enviado:
+    # A. Validamos que haya escrito nombre y teléfono
+    if not nombre or not telefono:
+        st.warning("⚠️ Por favor completa tu Nombre y Teléfono.")
+        st.stop()
+
+    # B. Validamos que no sea Domingo (0=Lunes, 6=Domingo)
+    if fecha.weekday() == 6:
+        st.error("⛔ Lo sentimos, los Domingos estamos cerrados.")
+        st.stop()
+
+    # C. Proceso de Guardado
+    with st.spinner("Verificando disponibilidad..."):
+        hoja = conectar_google_sheets()
+        if hoja:
+            # Verificamos si el lugar está libre
+            libre = turno_disponible(hoja, fecha, hora)
+            
+            if not libre:
+                st.error(f"❌ ¡Ups! El turno del {fecha} a las {hora} ya está ocupado.")
+                st.info("Por favor elige otro horario.")
+            else:
+                # D. GUARDAMOS EL TURNO (Las 5 columnas)
+                # Cliente | Telefono | Servicio | Fecha | Hora
+                fila = [nombre, telefono, servicio, str(fecha), str(hora)]
                 hoja.append_row(fila)
-                st.success(f"✅ ¡Listo, {nombre}! Tu turno quedó registrado.")
+                
+                # E. ÉXITO Y COMPROBANTE
                 st.balloons()
-    else:
-        st.warning("⚠️ Por favor completa tu nombre.")
-
-# --- ZONA PRIVADA (SOLO PARA TI) 🔐 ---
-st.divider()
-st.write("### 🔐 Administración")
-
-# Aquí pedimos una contraseña. Solo si escribes la correcta, se muestra la lista.
-password = st.text_input("Ingresa la clave para ver la agenda:", type="password")
-
-if password == "natali123":  # <--- ¡AQUÍ PUEDES CAMBIAR TU CONTRASEÑA!
-    hoja = conectar_google_sheets()
-    if hoja:
-        datos = hoja.get_all_records()
-        st.write("### 📅 Turnos Agendados:")
-        st.dataframe(datos)
-else:
-    st.info("Esta zona es solo para la dueña del negocio.")
+                st.success("✅ ¡Turno Reservado con Éxito!")
+                
+                # Tarjeta bonita para captura
+                with st.container(border=True):
+                    st.markdown(f"""
+                    ### 🎫 Comprobante de Turno
+                    **Cliente:** {nombre}
+                    **Servicio:** {servicio}
+                    
+                    🗓️ **Fecha:** {fecha}
+                    ⏰ **Hora:** {hora}
+                    
+                    ---
+                    📍 **Lugar:** {MI_DIRECCION}
+                    📞 **Contacto:** {MI_TELEFONO}
+                    📸 **Instagram:** {MI_INSTAGRAM}
+                    
+                    *Por favor guarda una captura de esta pantalla.*
+                    """)
