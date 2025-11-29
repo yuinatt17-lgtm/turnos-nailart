@@ -10,12 +10,12 @@ st.set_page_config(page_title="Reserva tu Turno", page_icon="💅")
 
 # --- 2. TUS DATOS (¡EDITA ESTO!) ---
 # Aquí es donde tú pones tu info real en VS Code:
-MI_DIRECCION = "Los Ralos"
+MI_DIRECCION = "Obispo Piedra Buena y San Martin - Los Ralos"
 MI_TELEFONO = "381 6914692" 
 MI_INSTAGRAM = "@nattdiaz98"
 
 # Título de la web
-st.title("💅 Reserva de Turnos")
+st.title("🦇Nails Art Natt🦇")
 st.write("Completa tus datos para agendar tu cita.")
 
 # --- 3. CONEXIÓN CON GOOGLE SHEETS ---
@@ -63,7 +63,7 @@ with st.form("mi_formulario"):
     with col1:
         nombre = st.text_input("Nombre y Apellido")
         telefono = st.text_input("Teléfono / WhatsApp")
-        servicio = st.selectbox("Servicio", ["Soft Gel", "Capping", "Service", "Esmaltado", "Retiro"])
+        servicio = st.selectbox("Servicio" , ["Soft Gel","Capping","Retiro"])
 
     with col2:
         # Calendario: min_value=date.today() impide elegir ayer
