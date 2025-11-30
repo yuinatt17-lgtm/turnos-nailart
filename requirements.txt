@@ -2,3 +2,4 @@ streamlit
 pandas
 gspread==5.10.0
 oauth2client
+streamlit-extras
