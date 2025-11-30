@@ -105,8 +105,11 @@ if enviado:
                 hoja.append_row(fila)
                 
                 # E. ÉXITO Y COMPROBANTE
-                st.balloons()
-                st.success("✅ ¡Turno Reservado con Éxito!")
+            # Quitamos los globos y ponemos el estilo metalero
+              st.markdown("## 🦇 ¡Turno Agendado con Éxito! 🤘") 
+              st.success("¡Tu cita ha sido confirmada!")
+            
+
                 
                 # Tarjeta bonita para captura
                 with st.container(border=True):
