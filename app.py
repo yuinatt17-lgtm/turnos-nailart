@@ -9,7 +9,7 @@ from datetime import date
 st.set_page_config(page_title="Nails Art Natt", page_icon="🦇")
 
 # --- 2. TUS DATOS ---
-MI_DIRECCION_GABINETE = 'Obispo Piedra Buena y San Martin Los Ralos (Tu Gabinete)"
+MI_DIRECCION_GABINETE = "Obispo Piedra Buena y Av.San Martin-Los Ralos"
 MI_TELEFONO = "3816914692" 
 MI_INSTAGRAM = "@nattdiaz98"
 
