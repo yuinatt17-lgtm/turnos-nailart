@@ -57,7 +57,7 @@ with st.form("mi_formulario"):
     with col1:
         nombre = st.text_input("Nombre y Apellido")
         telefono = st.text_input("Teléfono / WhatsApp")
-        servicio = st.selectbox("Servicio", ["Soft Gel", "Capping", "Service", "Esmaltado", "Retiro"])
+        servicio = st.selectbox("Servicio", ["Soft Gel", "Capping", "Semipermanentes"])
 
     with col2:
         fecha = st.date_input("Selecciona la Fecha", min_value=date.today())
@@ -68,7 +68,7 @@ with st.form("mi_formulario"):
     
     # --- NUEVA SECCIÓN: TIPO DE ATENCIÓN ---
     # Usamos radio botones para que sea fácil elegir
-    tipo_atencion = st.radio("¿Dónde realizamos el servicio?", ["En el Gabinete", "A Domicilio 🛵"])
+    tipo_atencion = st.radio("¿Dónde realizamos el servicio?", ["En Mi Domicilio", "A Domicilio 🛵"])
     
     # Variable para guardar la dirección final
     direccion_cliente = ""
@@ -78,7 +78,7 @@ with st.form("mi_formulario"):
         st.info("ℹ️ Por favor ingresa tu dirección exacta (Calle y Número).")
         direccion_input = st.text_input("Dirección del Domicilio")
     else:
-        direccion_input = "En Gabinete" # Si va al local, guardamos esto automático
+        direccion_input = "En Mi Domicilio " # Si va al local, guardamos esto automático
 
     # Botón para enviar
     enviado = st.form_submit_button("CONFIRMAR RESERVA")
