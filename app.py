@@ -58,7 +58,7 @@ with st.form("mi_formulario"):
     with col1:
         nombre = st.text_input("Nombre y Apellido")
         telefono = st.text_input("Teléfono / WhatsApp")
-        servicio = st.selectbox("Servicio", ["Soft Gel", "Capping", "Semipermanentes", "Retiro"])
+        servicio = st.selectbox("Servicio", ["Soft Gel", "Capping", "Semipermanentes"])
 
     with col2:
         fecha = st.date_input("Selecciona la Fecha", min_value=date.today())
