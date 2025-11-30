@@ -15,7 +15,7 @@ MI_TELEFONO = "381 6914692"
 MI_INSTAGRAM = "@nattdiaz98"
 
 # Título de la web
-st.markdown("<h1 style='text-align: center; color: #E6007A;'>🦇Nails Art Natt🦇/h1>", unsafe_allow_html=True)
+st.markdown("<h1 style='text-align: center; color: #E6007A;'>🦇 Nails Art Natt🦇</h1>", unsafe_allow_html=True)
 st.write("Completa el formulario para agendar tu cita.")
 
 # --- 3. CONEXIÓN CON GOOGLE SHEETS ---
