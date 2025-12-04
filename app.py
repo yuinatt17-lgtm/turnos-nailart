@@ -7,15 +7,15 @@ from datetime import date
 from streamlit_extras.let_it_rain import rain 
 
 # --- 1. CONFIGURACIÓN DE LA PÁGINA ---
-st.set_page_config(page_title="Nails Art Natt", page_icon="💅")
+st.set_page_config(page_title="Nails Art Natt🦇", page_icon="🦇")
 
 # --- 2. TUS DATOS ---
 MI_DIRECCION_GABINETE = "Obispo Piedra Buena y San Martin Los Ralos"
-MI_TELEFONO = "381 123 4567" 
-MI_INSTAGRAM = "@tus_uñas_art"
+MI_TELEFONO = "381 6914692" 
+MI_INSTAGRAM = "@nattdiaz98"
 
 # Título de la web con color MAGENTA
-st.markdown("<h1 style='text-align: center; color: #E6007A;'>💅 Nails Art Natt</h1>", unsafe_allow_html=True)
+st.markdown("<h1 style='text-align: center; color: #E6007A;'>🦇 Nails Art Natt</h1>", unsafe_allow_html=True)
 st.write("Completa el formulario para agendar tu cita.")
 
 # --- 3. CONEXIÓN CON GOOGLE SHEETS ---
