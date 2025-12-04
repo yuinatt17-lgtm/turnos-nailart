@@ -7,15 +7,15 @@ from datetime import date
 from streamlit_extras.let_it_rain import rain 
 
 # --- 1. CONFIGURACIÓN DE LA PÁGINA ---
-st.set_page_config(page_title="Nails Art Natt", page_icon="🦇")
+st.set_page_config(page_title="Nails Art Natt", page_icon="💅")
 
-# --- 2. TUS DATOS (¡PON TUS DATOS REALES AQUÍ!) ---
+# --- 2. TUS DATOS ---
 MI_DIRECCION_GABINETE = "Obispo Piedra Buena y San Martin Los Ralos"
-MI_TELEFONO = "381 6914692" 
-MI_INSTAGRAM = "@nattdiaz98"
+MI_TELEFONO = "381 123 4567" 
+MI_INSTAGRAM = "@tus_uñas_art"
 
-# Título de la web
-st.markdown("<h1 style='text-align: center; color: #E6007A;'>🦇 Nails Art Natt🦇</h1>", unsafe_allow_html=True)
+# Título de la web con color MAGENTA
+st.markdown("<h1 style='text-align: center; color: #E6007A;'>💅 Nails Art Natt</h1>", unsafe_allow_html=True)
 st.write("Completa el formulario para agendar tu cita.")
 
 # --- 3. CONEXIÓN CON GOOGLE SHEETS ---
@@ -39,7 +39,6 @@ def turno_disponible(hoja, fecha_elegida, hora_elegida):
     if df.empty:
         return True
     
-    # Normalizamos encabezados
     df.columns = [col.capitalize() for col in df.columns]
     
     coincidencias = df[
@@ -58,7 +57,7 @@ with st.form("mi_formulario"):
     with col1:
         nombre = st.text_input("Nombre y Apellido")
         telefono = st.text_input("Teléfono / WhatsApp")
-        servicio = st.selectbox("Servicio", ["Soft Gel", "Capping", "Semipermanentes"])
+        servicio = st.selectbox("Servicio", ["Soft Gel", "Capping", "Semipermanentes", "Retiro"])
 
     with col2:
         fecha = st.date_input("Selecciona la Fecha", min_value=date.today())
@@ -67,36 +66,42 @@ with st.form("mi_formulario"):
     
     st.divider()
     
-    # Opción de domicilio
-    tipo_atencion = st.radio("¿Dónde realizamos el servicio?", ["En mi Domicilio", "A Domicilio 🛵"])
+    # --- LÓGICA DE CHECKBOX (CASILLA) ---
+    # Preguntamos si quiere domicilio. Por defecto está desmarcado (False).
+    es_domicilio = st.checkbox("¿Necesitas servicio a domicilio? 🛵")
     
-    direccion_input = ""
+    direccion_final = "" # Aquí guardaremos la dirección
     
-    if tipo_atencion == "A Domicilio 🛵":
-        st.info("ℹ️ Por favor ingresa tu dirección exacta.")
-        direccion_input = st.text_input("Dirección del Domicilio")
+    if es_domicilio:
+        # Si marcó la casilla, le pedimos su dirección
+        st.info("ℹ️ Iré a tu casa. Por favor ingresa tu dirección exacta.")
+        direccion_input = st.text_input("Tu Dirección (Calle y Número)")
+        direccion_final = direccion_input # La dirección es la que ella escribe
     else:
-        direccion_input = "En mi Domicilio"
+        # Si NO marcó la casilla, le mostramos tu dirección
+        st.info(f"📍 Te espero en mi domicilio: **{MI_DIRECCION_GABINETE}**")
+        direccion_final = "En mi Domicilio (Cliente viene)"
 
-    # ESTE BOTÓN AHORA SÍ ESTÁ DENTRO DEL FORMULARIO (Identado)
+    # Botón de envío
     enviado = st.form_submit_button("CONFIRMAR RESERVA")
 
 # --- 6. LÓGICA DE GUARDADO ---
 if enviado:
-    # Validaciones
+    # Validaciones básicas
     if not nombre or not telefono:
         st.warning("⚠️ Por favor completa tu Nombre y Teléfono.")
         st.stop()
     
-    if tipo_atencion == "A Domicilio 🛵" and not direccion_input:
-        st.error("⛔ Para ir a domicilio, necesitamos tu dirección.")
+    # Validación: Si pidió domicilio, TIENE que haber escrito la dirección
+    if es_domicilio and not direccion_input:
+        st.error("⛔ Marcaste servicio a domicilio, pero no escribiste la dirección.")
         st.stop()
 
     if fecha.weekday() == 6:
         st.error("⛔ Lo sentimos, los Domingos estamos cerrados.")
         st.stop()
 
-    with st.spinner("Verificando disponibilidad..."):
+    with st.spinner("Agendando tu cita..."):
         hoja = conectar_google_sheets()
         if hoja:
             libre = turno_disponible(hoja, fecha, hora)
@@ -106,7 +111,7 @@ if enviado:
                 st.info("Por favor elige otro horario.")
             else:
                 # Guardamos
-                fila = [nombre, telefono, servicio, str(fecha), str(hora), direccion_input]
+                fila = [nombre, telefono, servicio, str(fecha), str(hora), direccion_final]
                 hoja.append_row(fila)
                 
                 # --- 🦇 LLUVIA DE MURCIÉLAGOS 🦇 ---
@@ -121,9 +126,14 @@ if enviado:
                 st.markdown("## 🦇 ¡Turno Agendado con Éxito! 🤘")
                 st.success("¡Tu cita ha sido confirmada!")
                 
-                # Comprobante
-                texto_lugar = f"🛵 **Voy a tu Domicilio:** {direccion_input}" if tipo_atencion == "A Domicilio 🛵" else f"📍 **Te espero en:** {MI_DIRECCION_GABINETE}"
+                # Definimos qué texto mostrar en el comprobante
+                texto_ubicacion = ""
+                if es_domicilio:
+                    texto_ubicacion = f"🛵 **Voy a tu Domicilio:** {direccion_final}"
+                else:
+                    texto_ubicacion = f"📍 **Te espero en:** {MI_DIRECCION_GABINETE}"
 
+                # Comprobante
                 with st.container(border=True):
                     st.markdown(f"""
                     ### 🎫 Comprobante de Turno
@@ -134,7 +144,7 @@ if enviado:
                     ⏰ **Hora:** {hora}
                     
                     ---
-                    {texto_lugar}
+                    {texto_ubicacion}
                     
                     📞 **Mi Contacto:** {MI_TELEFONO}
                     📸 **Instagram:** {MI_INSTAGRAM}
