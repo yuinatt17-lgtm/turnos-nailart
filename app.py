@@ -7,15 +7,15 @@ from datetime import date
 from streamlit_extras.let_it_rain import rain 
 
 # --- 1. CONFIGURACIÓN DE LA PÁGINA ---
-st.set_page_config(page_title="Nails Art Natt🦇", page_icon="🦇")
+st.set_page_config(page_title="Nails Art Natt", page_icon="💅")
 
 # --- 2. TUS DATOS ---
 MI_DIRECCION_GABINETE = "Obispo Piedra Buena y San Martin Los Ralos"
-MI_TELEFONO = "381 6914692" 
-MI_INSTAGRAM = "@nattdiaz98"
+MI_TELEFONO = "381 123 4567" 
+MI_INSTAGRAM = "@tus_uñas_art"
 
-# Título de la web con color MAGENTA
-st.markdown("<h1 style='text-align: center; color: #E6007A;'>🦇 Nails Art Natt</h1>", unsafe_allow_html=True)
+# Título MAGENTA
+st.markdown("<h1 style='text-align: center; color: #E6007A;'>💅 Nails Art Natt</h1>", unsafe_allow_html=True)
 st.write("Completa el formulario para agendar tu cita.")
 
 # --- 3. CONEXIÓN CON GOOGLE SHEETS ---
@@ -57,42 +57,83 @@ with st.form("mi_formulario"):
     with col1:
         nombre = st.text_input("Nombre y Apellido")
         telefono = st.text_input("Teléfono / WhatsApp")
-        servicio = st.selectbox("Servicio", ["Soft Gel", "Capping", "Semipermanentes", "Retiro"])
+        # LISTA DE SERVICIOS
+        servicio = st.selectbox("Servicio", ["Soft Gel", "Capping", "Semipermanentes", "Retiro", "Press On"])
 
     with col2:
         fecha = st.date_input("Selecciona la Fecha", min_value=date.today())
+        # TUS HORARIOS (Edita aquí si necesitas)
         horarios = ["17:00", "19:20", "21:30"]
         hora = st.selectbox("Selecciona la Hora", horarios)
     
+    # --- 💅 SECCIÓN ESPECIAL PRESS ON (ARGENTINA 0-9) ---
+    datos_press_on = "" 
+    
+    if servicio == "Press On":
+        st.markdown("---")
+        st.markdown("### 🖤 Personaliza tus Press On")
+        
+        # 1. Elección de Forma
+        # Usamos las opciones exactas que me diste
+        formas_disponibles = [
+            "Stiletto", 
+            "Coffin", 
+            "Almendra Corta", 
+            "Almendra Larga", 
+            "Cuadrada Corta", 
+            "Cuadrada Larga"
+        ]
+        forma = st.selectbox("Elige la Forma y Largo", formas_disponibles)
+        
+        st.write("---")
+        st.markdown("### 📏 Tus Medidas (Tips del 0 al 9)")
+        st.caption("Ingresa el número de Tip para cada dedo de una mano (se asume simetría).")
+        
+        # 2. Elección de Medidas (5 columnas para los 5 dedos)
+        c1, c2, c3, c4, c5 = st.columns(5)
+        
+        # Generamos la lista de números del 0 al 9
+        numeros = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+        
+        with c1:
+            pulgar = st.selectbox("👍 Pulgar", numeros, index=0) # Por defecto 0
+        with c2:
+            indice = st.selectbox("👆 Índice", numeros, index=4) # Por defecto 4
+        with c3:
+            mayor = st.selectbox("🖕 Mayor", numeros, index=3)
+        with c4:
+            anular = st.selectbox("💍 Anular", numeros, index=4)
+        with c5:
+            menique = st.selectbox("🤙 Meñique", numeros, index=7)
+            
+        # Guardamos todo en una sola frase para la hoja de cálculo
+        datos_press_on = f" | {forma} | Medidas: {pulgar}-{indice}-{mayor}-{anular}-{menique}"
+        
+        st.info("ℹ️ **Nota:** Las Press On requieren 48hs de elaboración.")
+
     st.divider()
     
-    # --- LÓGICA DE CHECKBOX (CASILLA) ---
-    # Preguntamos si quiere domicilio. Por defecto está desmarcado (False).
+    # --- LÓGICA DE DOMICILIO (CHECKBOX) ---
     es_domicilio = st.checkbox("¿Necesitas servicio a domicilio? 🛵")
     
-    direccion_final = "" # Aquí guardaremos la dirección
+    direccion_final = "" 
     
     if es_domicilio:
-        # Si marcó la casilla, le pedimos su dirección
         st.info("ℹ️ Iré a tu casa. Por favor ingresa tu dirección exacta.")
         direccion_input = st.text_input("Tu Dirección (Calle y Número)")
-        direccion_final = direccion_input # La dirección es la que ella escribe
+        direccion_final = direccion_input 
     else:
-        # Si NO marcó la casilla, le mostramos tu dirección
         st.info(f"📍 Te espero en mi domicilio: **{MI_DIRECCION_GABINETE}**")
         direccion_final = "En mi Domicilio (Cliente viene)"
 
-    # Botón de envío
     enviado = st.form_submit_button("CONFIRMAR RESERVA")
 
 # --- 6. LÓGICA DE GUARDADO ---
 if enviado:
-    # Validaciones básicas
     if not nombre or not telefono:
         st.warning("⚠️ Por favor completa tu Nombre y Teléfono.")
         st.stop()
     
-    # Validación: Si pidió domicilio, TIENE que haber escrito la dirección
     if es_domicilio and not direccion_input:
         st.error("⛔ Marcaste servicio a domicilio, pero no escribiste la dirección.")
         st.stop()
@@ -110,8 +151,10 @@ if enviado:
                 st.error(f"❌ ¡Ups! El turno del {fecha} a las {hora} ya está ocupado.")
                 st.info("Por favor elige otro horario.")
             else:
-                # Guardamos
-                fila = [nombre, telefono, servicio, str(fecha), str(hora), direccion_final]
+                # UNIMOS LOS DATOS DE PRESS ON AL SERVICIO
+                servicio_guardar = servicio + datos_press_on 
+                
+                fila = [nombre, telefono, servicio_guardar, str(fecha), str(hora), direccion_final]
                 hoja.append_row(fila)
                 
                 # --- 🦇 LLUVIA DE MURCIÉLAGOS 🦇 ---
@@ -122,18 +165,15 @@ if enviado:
                     animation_length="1"
                 )
                 
-                # Mensaje Gótico
                 st.markdown("## 🦇 ¡Turno Agendado con Éxito! 🤘")
                 st.success("¡Tu cita ha sido confirmada!")
                 
-                # Definimos qué texto mostrar en el comprobante
                 texto_ubicacion = ""
                 if es_domicilio:
                     texto_ubicacion = f"🛵 **Voy a tu Domicilio:** {direccion_final}"
                 else:
                     texto_ubicacion = f"📍 **Te espero en:** {MI_DIRECCION_GABINETE}"
 
-                # Comprobante
                 with st.container(border=True):
                     st.markdown(f"""
                     ### 🎫 Comprobante de Turno
