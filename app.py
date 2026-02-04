@@ -11,8 +11,8 @@ st.set_page_config(page_title="Nails Art Natt", page_icon="💅")
 
 # --- 2. TUS DATOS ---
 MI_DIRECCION_GABINETE = "Obispo Piedra Buena y San Martin Los Ralos"
-MI_TELEFONO = "381 123 4567" 
-MI_INSTAGRAM = "@tus_uñas_art"
+MI_TELEFONO = "3816914692" 
+MI_INSTAGRAM = "@nattdiaz98"
 
 # Título MAGENTA
 st.markdown("<h1 style='text-align: center; color: #E6007A;'>💅 Nails Art Natt</h1>", unsafe_allow_html=True)
