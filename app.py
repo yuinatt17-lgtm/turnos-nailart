@@ -7,8 +7,7 @@ from datetime import date
 from streamlit_extras.let_it_rain import rain 
 
 # --- 1. CONFIGURACIÓN DE LA PÁGINA ---
-st.set_page_config(page_title="Nails Art Natt", page_icon="🦇")
-
+st.set_page_config(page_title="Nails Art Natt🦇", page_icon="🦇")
 # --- 2. TUS DATOS ---
 MI_DIRECCION_GABINETE = "Obispo Piedra Buena y San Martin Los Ralos"
 MI_TELEFONO = "381 6914692" 
@@ -25,7 +24,7 @@ def conectar_google_sheets():
         scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
         creds = ServiceAccountCredentials.from_json_keyfile_dict(json_creds, scope)
         client = gspread.authorize(creds)
-        sheet = client.open("turnos_db").sheet1
+        sheet = client.open("turnos_v2").sheet1
         return sheet
     except Exception as e:
         st.error(f"⚠️ Error de conexión: {e}")
