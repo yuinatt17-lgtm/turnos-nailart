@@ -7,11 +7,11 @@ from datetime import date
 from streamlit_extras.let_it_rain import rain 
 
 # --- 1. CONFIGURACIÓN ---
-st.set_page_config(page_title="Nails Art Natt", page_icon="💅")
+st.set_page_config(page_title="Nails Art Natt🦇", page_icon="🦇")
 
 MI_DIRECCION_GABINETE = "Obispo Piedra Buena y San Martin Los Ralos"
-MI_TELEFONO = "381 123 4567" 
-MI_INSTAGRAM = "@tus_uñas_art"
+MI_TELEFONO = "3816914692" 
+MI_INSTAGRAM = "@nattdiaz98"
 
 st.markdown("<h1 style='text-align: center; color: #E6007A;'>💅 Nails Art Natt</h1>", unsafe_allow_html=True)
 st.write("Completa el formulario para agendar tu cita.")
@@ -24,7 +24,7 @@ def conectar_google_sheets():
         creds = ServiceAccountCredentials.from_json_keyfile_dict(json_creds, scope)
         client = gspread.authorize(creds)
         # Asegúrate de que este nombre coincida con tu archivo (turnos_db o turnos_v2)
-        sheet = client.open("turnos_db").sheet1 
+        sheet = client.open("turnos_v2").sheet1 
         return sheet
     except Exception as e:
         st.error(f"⚠️ Error de conexión: {e}")
