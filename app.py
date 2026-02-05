@@ -7,11 +7,11 @@ from datetime import date
 from streamlit_extras.let_it_rain import rain 
 
 # --- 1. CONFIGURACIÓN DE LA PÁGINA ---
-st.set_page_config(page_title="Nails Art Natt", page_icon="💅")
+st.set_page_config(page_title="Nails Art Natt", page_icon="🦇")
 
 # --- 2. TUS DATOS ---
 MI_DIRECCION_GABINETE = "Obispo Piedra Buena y San Martin Los Ralos"
-MI_TELEFONO = "3816914692" 
+MI_TELEFONO = "381 6914692" 
 MI_INSTAGRAM = "@nattdiaz98"
 
 # Título MAGENTA
@@ -31,24 +31,39 @@ def conectar_google_sheets():
         st.error(f"⚠️ Error de conexión: {e}")
         return None
 
-# --- 4. CEREBRO ANTI-SUPERPOSICIÓN ---
+# --- 4. CEREBRO ANTI-SUPERPOSICIÓN (VERSIÓN DETECTIVE 🕵️‍♀️) ---
 def turno_disponible(hoja, fecha_elegida, hora_elegida):
+    # Traemos todos los datos
     datos = hoja.get_all_records()
     df = pd.DataFrame(datos)
     
+    # Si la hoja está vacía de verdad, pase libre
     if df.empty:
-        return True
+        return True, None
     
-    df.columns = [col.capitalize() for col in df.columns]
+    # Limpieza de encabezados
+    df.columns = [col.strip().capitalize() for col in df.columns]
     
+    # ⚠️ TRUCO CLAVE: Filtramos filas que tengan la fecha vacía
+    # Esto evita que filas "fantasmas" bloqueen los turnos
+    if "Fecha" in df.columns:
+        df = df[df["Fecha"].astype(str).str.strip() != ""]
+
+    # Buscamos coincidencias
     coincidencias = df[
         (df["Fecha"].astype(str) == str(fecha_elegida)) & 
         (df["Hora"].astype(str) == str(hora_elegida))
     ]
     
+    # Si encontramos algo, devolvemos Falso y el nombre del culpable
     if not coincidencias.empty:
-        return False 
-    return True
+        # Intentamos obtener el nombre, si no existe ponemos "Alguien"
+        nombre_ocupante = "Alguien"
+        if "Nombre" in df.columns:
+            nombre_ocupante = coincidencias.iloc[0]["Nombre"]
+        return False, nombre_ocupante
+        
+    return True, None
 
 # --- 5. EL FORMULARIO ---
 with st.form("mi_formulario"):
@@ -62,7 +77,7 @@ with st.form("mi_formulario"):
 
     with col2:
         fecha = st.date_input("Selecciona la Fecha", min_value=date.today())
-        # TUS HORARIOS (Edita aquí si necesitas)
+        # TUS HORARIOS
         horarios = ["17:00", "19:20", "21:30"]
         hora = st.selectbox("Selecciona la Hora", horarios)
     
@@ -74,48 +89,34 @@ with st.form("mi_formulario"):
         st.markdown("### 🖤 Personaliza tus Press On")
         
         # 1. Elección de Forma
-        # Usamos las opciones exactas que me diste
         formas_disponibles = [
-            "Stiletto", 
-            "Coffin", 
-            "Almendra Corta", 
-            "Almendra Larga", 
-            "Cuadrada Corta", 
-            "Cuadrada Larga"
+            "Stiletto", "Coffin", 
+            "Almendra Corta", "Almendra Larga", 
+            "Cuadrada Corta", "Cuadrada Larga"
         ]
         forma = st.selectbox("Elige la Forma y Largo", formas_disponibles)
         
         st.write("---")
         st.markdown("### 📏 Tus Medidas (Tips del 0 al 9)")
-        st.caption("Ingresa el número de Tip para cada dedo de una mano (se asume simetría).")
+        st.caption("Ingresa el número de Tip para cada dedo.")
         
-        # 2. Elección de Medidas (5 columnas para los 5 dedos)
+        # 2. Elección de Medidas (0-9)
         c1, c2, c3, c4, c5 = st.columns(5)
-        
-        # Generamos la lista de números del 0 al 9
         numeros = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
         
-        with c1:
-            pulgar = st.selectbox("👍 Pulgar", numeros, index=0) # Por defecto 0
-        with c2:
-            indice = st.selectbox("👆 Índice", numeros, index=4) # Por defecto 4
-        with c3:
-            mayor = st.selectbox("🖕 Mayor", numeros, index=3)
-        with c4:
-            anular = st.selectbox("💍 Anular", numeros, index=4)
-        with c5:
-            menique = st.selectbox("🤙 Meñique", numeros, index=7)
+        with c1: pulgar = st.selectbox("👍 Pulgar", numeros, index=0)
+        with c2: indice = st.selectbox("👆 Índice", numeros, index=4)
+        with c3: mayor = st.selectbox("🖕 Mayor", numeros, index=3)
+        with c4: anular = st.selectbox("💍 Anular", numeros, index=4)
+        with c5: menique = st.selectbox("🤙 Meñique", numeros, index=7)
             
-        # Guardamos todo en una sola frase para la hoja de cálculo
         datos_press_on = f" | {forma} | Medidas: {pulgar}-{indice}-{mayor}-{anular}-{menique}"
-        
         st.info("ℹ️ **Nota:** Las Press On requieren 48hs de elaboración.")
 
     st.divider()
     
-    # --- LÓGICA DE DOMICILIO (CHECKBOX) ---
+    # --- LÓGICA DE DOMICILIO ---
     es_domicilio = st.checkbox("¿Necesitas servicio a domicilio? 🛵")
-    
     direccion_final = "" 
     
     if es_domicilio:
@@ -142,28 +143,23 @@ if enviado:
         st.error("⛔ Lo sentimos, los Domingos estamos cerrados.")
         st.stop()
 
-    with st.spinner("Agendando tu cita..."):
+    with st.spinner("Revisando disponibilidad..."):
         hoja = conectar_google_sheets()
         if hoja:
-            libre = turno_disponible(hoja, fecha, hora)
+            # Usamos la nueva función DETECTIVE que nos devuelve 2 cosas
+            esta_libre, nombre_ocupante = turno_disponible(hoja, fecha, hora)
             
-            if not libre:
-                st.error(f"❌ ¡Ups! El turno del {fecha} a las {hora} ya está ocupado.")
+            if not esta_libre:
+                # AQUI MOSTRAMOS QUIÉN TIENE EL TURNO
+                st.error(f"❌ ¡Ups! Ese turno ya está reservado por: {nombre_ocupante}")
                 st.info("Por favor elige otro horario.")
             else:
-                # UNIMOS LOS DATOS DE PRESS ON AL SERVICIO
                 servicio_guardar = servicio + datos_press_on 
-                
-                fila = [nombre, telefono, servicio_guardar, str(fecha), str(hora), direccion_final]
+                # Agregamos una columna vacía al final para el "Estado" del calendario
+                fila = [nombre, telefono, servicio_guardar, str(fecha), str(hora), direccion_final, ""]
                 hoja.append_row(fila)
                 
-                # --- 🦇 LLUVIA DE MURCIÉLAGOS 🦇 ---
-                rain(
-                    emoji="🦇",
-                    font_size=54,
-                    falling_speed=5,
-                    animation_length="1"
-                )
+                rain(emoji="🦇", font_size=54, falling_speed=5, animation_length="1")
                 
                 st.markdown("## 🦇 ¡Turno Agendado con Éxito! 🤘")
                 st.success("¡Tu cita ha sido confirmada!")
